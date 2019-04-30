@@ -14,6 +14,10 @@ fn index( _req: &HttpRequest) -> Result<NamedFile> {
     Ok(NamedFile::open("static/index")?)
 }
 
+//Starting off, just want to serve a static index file, as html. Right now the browser tries to download
+// the file, though that might just be a product of it not being the .html extension.
+// It would also be nice to serve DawnCronin.com and CollinValley.com from seperate workers. Essentially
+// we do want to leverage what makes this framework good.
 fn main() {
     let server = server::new( || {
         vec![
