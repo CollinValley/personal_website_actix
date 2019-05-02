@@ -1,4 +1,59 @@
 extern crate actix_web;
+
+use actix_web::actix::System;
+use std::path::PathBuf;
+use std::fs::File;
+use actix_web::{server::HttpServer, Path, App, HttpRequest, Responder, http::Method};
+use std::io::Read;
+
+fn open_file(path: PathBuf) -> Option<String> {
+   let file = File::open("static/secret.html");
+   match file {
+       Ok(mut file) => {
+          let mut contents = String::new();
+          match file.read_to_string(&mut contents) {
+              Ok(_) => Some(contents),
+              Err(_) => None,
+          }
+
+       },
+       Err(_) => return None,
+   }
+}
+// Having some trouble getting the pathbuf part to work, need to print out some more debug honestly. And also get to bed here
+// The biggest issue is that my path is not formatted correctly, or being interpreted by the open command like I think.
+// I assume that path implements Debug, so I should just be able to print it out. 
+
+fn index( info: &HttpRequest) -> String {
+    //format!("{}", info)
+    let remote = info.path().to_owned();
+    let file_path: PathBuf = PathBuf::from(remote);
+    let contents = open_file(file_path);
+    match contents {
+        Some(file_bytes) => {
+          file_bytes
+        },
+        None => String::from(info.path().trim_start_matches("/")),
+    }
+    
+}
+
+fn main() {
+    let sys = System::new("guide");
+
+    HttpServer::new(|| App::new().default_resource( |r| r.f(index)))
+        .bind("127.0.0.1:1337")
+        .unwrap()
+        .start();
+
+    let _ = sys.run();
+}
+
+
+
+
+
+/*
 use std::path::PathBuf;
 use actix_web::{server, pred, App, HttpRequest, Result, http::Method, fs::NamedFile};
 
@@ -14,10 +69,6 @@ fn index( _req: &HttpRequest) -> Result<NamedFile> {
     Ok(NamedFile::open("static/index")?)
 }
 
-//Starting off, just want to serve a static index file, as html. Right now the browser tries to download
-// the file, though that might just be a product of it not being the .html extension.
-// It would also be nice to serve DawnCronin.com and CollinValley.com from seperate workers. Essentially
-// we do want to leverage what makes this framework good.
 fn main() {
     let server = server::new( || {
         vec![
@@ -34,3 +85,5 @@ fn main() {
 
     server.bind("127.0.0.1:8000").unwrap().run();
 }
+
+*/
