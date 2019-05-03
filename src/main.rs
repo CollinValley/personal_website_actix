@@ -7,11 +7,9 @@ use actix_web::{server::HttpServer, App, HttpRequest, Responder, http::Method};
 use std::io::Read;
 
 fn open_file(path: &Path) -> Option<String> {
-   print!("Inside open file {:?}", path);
    let file = File::open(path);
    match file {
        Ok(mut file) => {
-          print!("Okay opening file");
           let mut contents = String::new();
           match file.read_to_string(&mut contents) {
               Ok(_) => Some(contents),
@@ -22,12 +20,8 @@ fn open_file(path: &Path) -> Option<String> {
        Err(_) => return None,
    }
 }
-// Having some trouble getting the pathbuf part to work, need to print out some more debug honestly. And also get to bed here
-// The biggest issue is that my path is not formatted correctly, or being interpreted by the open command like I think.
-// I assume that path implements Debug, so I should just be able to print it out. 
 
 fn index( info: &HttpRequest) -> String {
-    //format!("{}", info)
     let remote = info.path().to_owned();
     let file_path: PathBuf = PathBuf::from(remote);
     let stripped_file_path = file_path.strip_prefix("/").unwrap();
