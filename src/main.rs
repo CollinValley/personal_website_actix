@@ -1,15 +1,17 @@
 extern crate actix_web;
 
 use actix_web::actix::System;
-use std::path::PathBuf;
+use std::path::{Path,PathBuf};
 use std::fs::File;
-use actix_web::{server::HttpServer, Path, App, HttpRequest, Responder, http::Method};
+use actix_web::{server::HttpServer, App, HttpRequest, Responder, http::Method};
 use std::io::Read;
 
-fn open_file(path: PathBuf) -> Option<String> {
-   let file = File::open("static/secret.html");
+fn open_file(path: &Path) -> Option<String> {
+   print!("Inside open file {:?}", path);
+   let file = File::open(path);
    match file {
        Ok(mut file) => {
+          print!("Okay opening file");
           let mut contents = String::new();
           match file.read_to_string(&mut contents) {
               Ok(_) => Some(contents),
@@ -28,7 +30,9 @@ fn index( info: &HttpRequest) -> String {
     //format!("{}", info)
     let remote = info.path().to_owned();
     let file_path: PathBuf = PathBuf::from(remote);
-    let contents = open_file(file_path);
+    let stripped_file_path = file_path.strip_prefix("/").unwrap();
+    print!("{:?}", stripped_file_path);
+    let contents = open_file(stripped_file_path);
     match contents {
         Some(file_bytes) => {
           file_bytes
