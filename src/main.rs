@@ -1,13 +1,16 @@
 extern crate actix_web;
 
 use actix_web::actix::System;
-use std::path::{Path,PathBuf};
+use std::path::{PathBuf, Path};
 use std::fs::File;
-use actix_web::{server::HttpServer, App, HttpRequest, Responder, http::Method};
+use actix_web::{server::HttpServer, http, App, HttpRequest, HttpResponse};
 use std::io::Read;
 
-fn open_file(path: &Path) -> Option<String> {
-   let file = File::open(path);
+/// Reads a file from the 'static' directory and returns its
+/// contents an Option<String>
+fn read_static_file(path: &Path) -> Option<String> {
+   let static_path = Path::new("static/").join(path);
+   let file = File::open(static_path);
    match file {
        Ok(mut file) => {
           let mut contents = String::new();
@@ -15,25 +18,22 @@ fn open_file(path: &Path) -> Option<String> {
               Ok(_) => Some(contents),
               Err(_) => None,
           }
-
        },
        Err(_) => return None,
    }
 }
 
-fn index( info: &HttpRequest) -> String {
-    let remote = info.path().to_owned();
-    let file_path: PathBuf = PathBuf::from(remote);
-    let stripped_file_path = file_path.strip_prefix("/").unwrap();
-    print!("{:?}", stripped_file_path);
-    let contents = open_file(stripped_file_path);
+fn index( info: &HttpRequest) -> HttpResponse {
+    let requested_file = PathBuf::from(info.path().trim_start_matches("/"));
+
+    let contents = read_static_file(requested_file.as_path());
     match contents {
         Some(file_bytes) => {
-          file_bytes
+            HttpResponse::Ok()
+                .body(file_bytes)
         },
-        None => String::from(info.path().trim_start_matches("/")),
+        None => HttpResponse::NotFound().body("Whoops that file doesn't exist"),
     }
-    
 }
 
 fn main() {
@@ -46,9 +46,6 @@ fn main() {
 
     let _ = sys.run();
 }
-
-
-
 
 
 /*
